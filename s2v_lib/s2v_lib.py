@@ -24,10 +24,10 @@ class _s2v_lib(object):
 
         self.batch_graph_handle = ctypes.c_void_p(self.lib.GetGraphStruct())
 
-    def _prepare_graph(self, graph_list, is_directed=0):    
+    def _prepare_graph(self, graph_list, is_directed=0):
         edgepair_list = (ctypes.c_void_p * len(graph_list))()
         list_num_nodes = np.zeros((len(graph_list), ), dtype=np.int32)
-        list_num_edges = np.zeros((len(graph_list), ), dtype=np.int32)        
+        list_num_edges = np.zeros((len(graph_list), ), dtype=np.int32)
         for i in range(len(graph_list)):
             if type(graph_list[i].edge_pairs) is ctypes.c_void_p:
                 edgepair_list[i] = graph_list[i].edge_pairs
@@ -41,8 +41,8 @@ class _s2v_lib(object):
         total_num_nodes = np.sum(list_num_nodes)
         total_num_edges = np.sum(list_num_edges)
 
-        self.lib.PrepareBatchGraph(self.batch_graph_handle, 
-                                len(graph_list), 
+        self.lib.PrepareBatchGraph(self.batch_graph_handle,
+                                len(graph_list),
                                 ctypes.c_void_p(list_num_nodes.ctypes.data),
                                 ctypes.c_void_p(list_num_edges.ctypes.data),
                                 ctypes.cast(edgepair_list, ctypes.c_void_p),
@@ -53,15 +53,15 @@ class _s2v_lib(object):
     def PrepareMeanField(self, graph_list, is_directed=0):
         assert not is_directed
         total_num_nodes, total_num_edges = self._prepare_graph(graph_list, is_directed)
-        
+
         n2n_idxes = torch.LongTensor(2, total_num_edges * 2)
-        n2n_vals = torch.FloatTensor(total_num_edges * 2)
+        n2n_vals = torch.FloatTensor(int(total_num_edges) * 2)
 
         e2n_idxes = torch.LongTensor(2, total_num_edges * 2)
-        e2n_vals = torch.FloatTensor(total_num_edges * 2)
+        e2n_vals = torch.FloatTensor(int(total_num_edges) * 2)
 
         subg_idxes = torch.LongTensor(2, total_num_nodes)
-        subg_vals = torch.FloatTensor(total_num_nodes)
+        subg_vals = torch.FloatTensor(int(total_num_nodes))
 
         idx_list = (ctypes.c_void_p * 3)()
         idx_list[0] = n2n_idxes.numpy().ctypes.data
@@ -76,10 +76,10 @@ class _s2v_lib(object):
         self.lib.PrepareMeanField(self.batch_graph_handle,
                                 ctypes.cast(idx_list, ctypes.c_void_p),
                                 ctypes.cast(val_list, ctypes.c_void_p))
-        
-        n2n_sp = torch.sparse.FloatTensor(n2n_idxes, n2n_vals, torch.Size([total_num_nodes, total_num_nodes]))
-        e2n_sp = torch.sparse.FloatTensor(e2n_idxes, e2n_vals, torch.Size([total_num_nodes, total_num_edges * 2]))
-        subg_sp = torch.sparse.FloatTensor(subg_idxes, subg_vals, torch.Size([len(graph_list), total_num_nodes]))
+
+        n2n_sp = torch.sparse.FloatTensor(n2n_idxes, n2n_vals, torch.Size([int(total_num_nodes), int(total_num_nodes)]))
+        e2n_sp = torch.sparse.FloatTensor(e2n_idxes, e2n_vals, torch.Size([int(total_num_nodes), int(total_num_edges) * 2]))
+        subg_sp = torch.sparse.FloatTensor(subg_idxes, subg_vals, torch.Size([len(graph_list), int(total_num_nodes)]))
         return n2n_sp, e2n_sp, subg_sp
 
     def PrepareLoopyBP(self, graph_list, is_directed=0):
@@ -88,16 +88,16 @@ class _s2v_lib(object):
         total_edge_pairs = self.lib.NumEdgePairs(self.batch_graph_handle)
 
         n2e_idxes = torch.LongTensor(2, total_num_edges * 2)
-        n2e_vals = torch.FloatTensor(total_num_edges * 2)
+        n2e_vals = torch.FloatTensor(int(total_num_edges) * 2)
 
         e2e_idxes = torch.LongTensor(2, total_edge_pairs)
         e2e_vals = torch.FloatTensor(total_edge_pairs)
 
         e2n_idxes = torch.LongTensor(2, total_num_edges * 2)
-        e2n_vals = torch.FloatTensor(total_num_edges * 2)
+        e2n_vals = torch.FloatTensor(int(total_num_edges) * 2)
 
         subg_idxes = torch.LongTensor(2, total_num_nodes)
-        subg_vals = torch.FloatTensor(total_num_nodes)
+        subg_vals = torch.FloatTensor(int(total_num_nodes))
 
         idx_list = (ctypes.c_void_p * 4)()
         idx_list[0] = ctypes.c_void_p(n2e_idxes.numpy().ctypes.data)
@@ -115,10 +115,10 @@ class _s2v_lib(object):
                                 ctypes.cast(idx_list, ctypes.c_void_p),
                                 ctypes.cast(val_list, ctypes.c_void_p))
 
-        n2e_sp = torch.sparse.FloatTensor(n2e_idxes, n2e_vals, torch.Size([total_num_edges * 2, total_num_nodes]))
-        e2e_sp = torch.sparse.FloatTensor(e2e_idxes, e2e_vals, torch.Size([total_num_edges * 2, total_num_edges * 2]))
-        e2n_sp = torch.sparse.FloatTensor(e2n_idxes, e2n_vals, torch.Size([total_num_nodes, total_num_edges * 2]))
-        subg_sp = torch.sparse.FloatTensor(subg_idxes, subg_vals, torch.Size([len(graph_list), total_num_nodes]))
+        n2e_sp = torch.sparse.FloatTensor(n2e_idxes, n2e_vals, torch.Size([int(total_num_edges) * 2, int(total_num_nodes)]))
+        e2e_sp = torch.sparse.FloatTensor(e2e_idxes, e2e_vals, torch.Size([int(total_num_edges) * 2, int(total_num_edges) * 2]))
+        e2n_sp = torch.sparse.FloatTensor(e2n_idxes, e2n_vals, torch.Size([int(total_num_nodes), int(total_num_edges) * 2]))
+        subg_sp = torch.sparse.FloatTensor(subg_idxes, subg_vals, torch.Size([len(graph_list), int(total_num_nodes)]))
 
         return n2e_sp, e2e_sp, e2n_sp, subg_sp
 

@@ -97,6 +97,7 @@ if __name__ == '__main__':
     np.random.seed(cmd_args.seed)
     torch.manual_seed(cmd_args.seed)
 
+    print('Hello world')
     train_graphs, test_graphs = load_data()
     print('# train: %d, # test: %d' % (len(train_graphs), len(test_graphs)))
 
@@ -112,7 +113,6 @@ if __name__ == '__main__':
         random.shuffle(train_idxes)
         avg_loss = loop_dataset(train_graphs, classifier, train_idxes, optimizer=optimizer)
         print('\033[92maverage training of epoch %d: loss %.5f acc %.5f\033[0m' % (epoch, avg_loss[0], avg_loss[1]))
-        
         test_loss = loop_dataset(test_graphs, classifier, list(range(len(test_graphs))))
         print('\033[93maverage test of epoch %d: loss %.5f acc %.5f\033[0m' % (epoch, test_loss[0], test_loss[1]))
 
