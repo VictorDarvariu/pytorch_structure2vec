@@ -1,5 +1,10 @@
 # pytorch_structure2vec
-pytorch implementation of structure2vec
+pytorch implementation of structure2vec, forked from https://github.com/Hanjun-Dai/pytorch_structure2vec.
+
+This version contains some small changes in order to be compatible with Python3.
+
+Original contents of `README.md` below:
+
 
 ## Setup
 
